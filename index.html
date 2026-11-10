@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#14213d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<title>Kadıköy Büfe</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ANA MENÜ -->
+  <section id="title" class="screen active">
+    <div class="title-art">
+      <div class="awning big"></div>
+      <div class="logo">
+        <span class="logo-top">KADIKÖY</span>
+        <span class="logo-main">BÜFE</span>
+        <span class="logo-sub">tost · ayran · muhabbet</span>
+      </div>
+      <div class="title-emoji">🥪 🥤 🐈 ⛴️</div>
+    </div>
+    <div class="title-actions">
+      <button id="btnContinue" class="btn primary" hidden>Devam Et</button>
+      <button id="btnNew" class="btn">Yeni Oyun</button>
+      <button id="btnAch" class="btn ghost">🏅 Başarımlar ve skorlar</button>
+      <button id="btnSet" class="btn ghost">⚙️ Ayarlar ve zorluk</button>
+      <p id="bestLine" class="muted"></p>
+    </div>
+
+    <div class="overlay" id="achv" hidden>
+      <div class="sheet">
+        <h2>Başarımlar</h2>
+        <div id="achList" class="achlist"></div>
+        <button id="btnAchClose" class="btn primary">Kapat</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAHALLE (izometrik) -->
+  <section id="hub" class="screen">
+    <header class="m-head">
+      <div>
+        <div class="m-day" id="uDay">Gün 1</div>
+        <div class="m-sub" id="uEvent"></div>
+      </div>
+      <div class="m-cash" id="uCash">₺0</div>
+    </header>
+    <div class="hub-scene" id="hubScene"></div>
+    <div class="hub-info">
+      <div class="card help" id="uHelp">
+        <b>Nasıl oynanır?</b>
+        <p>Toptancıdan malzemeni al, sonra büfeye dokunup içeri gir.</p>
+        <p>Tost için ekmeği ve kaşarı tezgâha sürükle, tezgâhtan ızgaraya taşı, “Bastır!” deyince dokun. Kıvamındayken tezgâha al, dokunup ikiye kes, müşteriye sürükle.</p>
+        <p>Üç iş var: mutfak, servis ve kasa. Hepsini kendin yapabilir ya da toptancıdan eleman tutup birine odaklanabilirsin.</p>
+      </div>
+      <div class="card goals" id="uGoals"></div>
+      <div class="card nb" id="uNb"></div>
+      <button id="btnPrep" class="btn">🔪 Açılış hazırlığı yap</button>
+      <p class="muted small" id="uRent"></p>
+    </div>
+    <div class="overlay" id="prep" hidden>
+      <div class="sheet">
+        <h2 id="prepTitle">🔪 Açılış Hazırlığı</h2>
+        <p id="prepMsg" class="bankinfo"></p>
+        <div class="prepbar"><i id="prepBar"></i></div>
+        <div class="mgbar" id="mgBar" hidden><i id="mgZone"></i><b id="mgMark"></b></div>
+        <button id="prepTap" class="preptap"><b id="prepCount">0</b><span id="prepUnit">dilim</span></button>
+        <div class="mglr" id="mgLR" hidden><button id="mgL">◀ Sol</button><button id="mgR">Sağ ▶</button></div>
+        <button id="btnPrepDone" class="btn primary" hidden>Tamam</button>
+      </div>
+    </div>
+    <div class="overlay" id="bank" hidden>
+      <div class="sheet">
+        <h2>🏦 Banka</h2>
+        <div id="bankInfo" class="bankinfo"></div>
+        <div id="bankBtns" class="bankbtns"></div>
+        <button id="btnBankClose" class="btn ghost">Kapat</button>
+      </div>
+    </div>
+    <div class="overlay" id="warn" hidden>
+      <div class="sheet">
+        <h2>Malzeme eksik ⚠️</h2>
+        <p id="warnText" class="bankinfo"></p>
+        <button id="btnWarnGo" class="btn primary">Toptancıya git</button>
+        <button id="btnWarnOpen" class="btn ghost">Yine de aç</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOPTANCI -->
+  <section id="morning" class="screen">
+    <header class="m-head">
+      <div>
+        <div class="m-day" id="mDay">Gün 1</div>
+        <div class="m-sub">Toptancı ve yatırımlar</div>
+      </div>
+      <div class="m-cash" id="mCash">₺0</div>
+    </header>
+    <div class="m-scroll">
+      <div class="card" id="mMenu"></div>
+
+      <h3>Büfeni süsle</h3>
+      <div class="card" id="mStyle"></div>
+
+      <h3 id="hRecipe">Tarif defteri</h3>
+      <div class="card" id="mRecipe"></div>
+
+      <h3>Fiyat politikası</h3>
+      <div class="seg" id="mPolicy"></div>
+      <p class="muted small" id="mPolicyDesc"></p>
+
+      <h3>Toptancı</h3>
+      <div id="mMarket" class="list"></div>
+
+      <h3>Personel</h3>
+      <div id="mStaff" class="list"></div>
+
+      <h3>Konum</h3>
+      <div id="mLocs" class="list"></div>
+
+      <h3>Yatırımlar</h3>
+      <div id="mUpgrades" class="list"></div>
+    </div>
+    <div class="mmsg" id="mMsg" hidden></div>
+    <footer class="m-foot">
+      <button id="btnBack" class="btn primary">Mahalleye Dön 🏘️</button>
+    </footer>
+  </section>
+
+  <!-- GÜN: BÜFENİN İÇİ -->
+  <section id="day" class="screen">
+    <div class="hud">
+      <div class="hud-item"><span id="hDay">Gün 1</span><b id="hClock">08:00</b></div>
+      <div class="hud-item"><span>Kasa</span><b id="hCash">₺0</b></div>
+      <div class="hud-item"><span>İtibar</span><b id="hRep">★ 2.5</b></div>
+      <button id="btnPause" class="icon-btn" aria-label="Duraklat">⏸</button>
+    </div>
+
+    <div class="scene" id="scene">
+      <div class="sky" id="sky"></div>
+      <div class="awnlayer" id="awnLayer"></div>
+      <div class="deco" id="deco"></div>
+      <div class="banner" id="banner"></div>
+      <div class="combo" id="combo" hidden></div>
+      <button class="gull" id="gull" hidden><img src="art/marti.png" alt="Martı" draggable="false"></button>
+      <div class="customers" id="customers"></div>
+      <button class="cat" id="cat" hidden><img src="art/kedi.png" alt="Kedi" draggable="false"></button>
+      <div class="counter"></div>
+      <div class="visitor" id="visitor" hidden><span id="visText"></span><button id="visBtn"></button></div>
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <div class="kitchen">
+      <div class="coach" id="coach" hidden></div>
+      <div class="cookrow" id="stations"></div>
+      <div class="prep">
+        <div class="boardwrap">
+          <button class="board" id="board" data-drop="board"></button>
+          <button class="sauce k" id="sauceK" aria-label="Ketçap" hidden><i></i>Ketçap</button>
+          <button class="sauce m" id="sauceM" aria-label="Mayonez" hidden><i></i>Mayo</button>
+          <button class="sponge" id="sponge" aria-label="Tezgâhı sil" data-lvl="0">🧽</button>
+          <button class="trash" id="trash" data-drop="trash" aria-label="Tezgâhı boşalt"><img src="art/cop.png" alt="" draggable="false"></button>
+        </div>
+        <div class="ings" id="ings"></div>
+      </div>
+      <div class="shelf" id="shelf"></div>
+    </div>
+
+    <div class="pos" id="pos" hidden>
+      <div class="pos-body">
+        <button class="pos-x" id="posX" aria-label="Kapat">✕</button>
+        <div class="pos-lcd"><b id="posAmt">₺0</b><span id="posMsg"></span></div>
+        <div class="pos-keys" id="posKeys"></div>
+        <div class="pos-slot">💳 kart buraya</div>
+      </div>
+    </div>
+
+    <div class="overlay" id="pause" hidden>
+      <div class="sheet">
+        <h2>Duraklatıldı</h2>
+        <div id="pGoals" class="pgoals"></div>
+        <button id="btnResume" class="btn primary">Devam</button>
+        <button id="btnMute" class="btn">Ses: Açık</button>
+        <button id="btnMusic" class="btn">Müzik: Açık</button>
+        <button id="btnSet2" class="btn">⚙️ Ayarlar</button>
+        <button id="btnQuit" class="btn ghost">Ana Menü</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- AKŞAM: ÖZET -->
+  <section id="summary" class="screen">
+    <div class="sum-wrap">
+      <div class="sum-title" id="sTitle">Gün Sonu</div>
+      <div class="card" id="sTable"></div>
+      <div class="card" id="sGoals"></div>
+      <div class="card" id="sNotes"></div>
+      <button id="btnShare" class="btn">📸 Günü paylaş</button>
+      <button id="btnNext" class="btn primary">Ertesi Güne ☀️</button>
+    </div>
+  </section>
+
+  <!-- İFLAS -->
+  <section id="gameover" class="screen">
+    <div class="sum-wrap">
+      <div class="sum-title" id="gTitle">Kepenk İndi 😿</div>
+      <div class="card" id="gText"></div>
+      <button id="btnRescue" class="btn primary" hidden></button>
+      <button id="btnRestart" class="btn">Baştan Başla</button>
+    </div>
+  </section>
+
+  <div class="overlay top" id="settings" hidden>
+    <div class="sheet">
+      <h2>⚙️ Ayarlar</h2>
+      <div class="seg" id="diffSeg"></div>
+      <p class="muted small" id="diffNote"></p>
+      <div id="prefBtns" class="bankbtns"></div>
+      <button id="btnSetClose" class="btn primary">Tamam</button>
+    </div>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
