@@ -446,7 +446,7 @@ function newGame() {
     prices: {}, log: [], story: null, challenge: null, known: {},
     ledger: {}, ledgerMiss: {}, supplier: 1, insured: false, locked: false, fameDay: 0, askida: 0, special: null,
     repX: { lezzet: 2.5, hiz: 2.5, temizlik: 2.5, fiyat: 2.5 },
-    decor: {}, radio: 0, kittens: 0, assoc: 0, rentCut: false, voteDay: 0, tender: false, forceEvent: null, legacy: store(LEGACY_KEY) || 0,
+    decor: {}, radio: 0, kittens: 0, assoc: 0, rentCut: false, rentV: 2, voteDay: 0, tender: false, forceEvent: null, legacy: store(LEGACY_KEY) || 0,
     nb: {}, nbDay: {}, style: { awn: 0, sign: 'BÜFE', deco: 0, cat: 'Tekir' },
   };
 }
@@ -478,7 +478,33 @@ const priceW = (id) => clamp(Math.pow(DISHES[id].price / basePrice(id), 1.5), 0.
 const nSlots = () => (S.tier >= 1 ? 4 : 3);
 const slotX = (i) => (nSlots() === 4 ? [12.5, 37.5, 62.5, 87.5] : [17.5, 50, 82.5])[i];
 const franchise = () => Object.keys(S.mgr || {}).filter((id) => S.mgr[id] && S.locs[id] && id !== S.loc).reduce((a, id) => a + round5((150 + S.rep * 90) * LOCS[id].spawn), 0);
-const rent = (day) => Math.round((300 + 75 * (day - 1) + LOCS[S.loc].rent) * DIFF[S.diff || 'normal'].rent * (S.rentCut ? 0.9 : 1));
+// Kira haftada bir artar ve tavanda durur; mahalle farkı ve zorluk bunun üstüne biner
+const RENT_STEPS = [300, 450, 600, 750, 900, 1000];
+const rentBase = (day) => RENT_STEPS[Math.min(RENT_STEPS.length - 1, Math.floor((day - 1) / 7))];
+const rent = (day) => round5((rentBase(day) + LOCS[S.loc].rent) * DIFF[S.diff || 'normal'].rent * (S.rentCut ? 0.9 : 1));
+// Kiranın gidişatı: bir sonraki artış ne zaman, tavan ne kadar
+function rentNote() {
+  if (rentBase(S.day) >= RENT_STEPS[RENT_STEPS.length - 1]) return '🏠 Kira tavanda; bundan sonra artmaz.';
+  const left = 7 - ((S.day - 1) % 7);
+  return `🏠 Kira haftada bir artar: ${left === 1 ? 'yarın' : left + ' gün sonra'} ${tl(rent(S.day + left))}, en çok ${tl(rent(999))}.`;
+}
+// Başabaş: bu akşamki sabit ödemeleri çıkarmak için yaklaşık kaç müşteri gerekir
+const fixedCosts = () => rent(S.day) + wages() + (S.night ? NIGHT_COST : 0) + (S.loan ? Math.min(S.loan.pay, S.loan.left) : 0) + (S.insured ? 60 : 0) + (S.kittens ? 20 : 0);
+function breakEven() {
+  const fixed = fixedCosts();
+  // Müşteri başına kasada kalan: son üç günün gerçeği (mal, israf, vergi, bahşiş, ödül hepsi içinde)
+  const days = (S.log || []).filter((l) => l.served > 0 && l.fix != null).slice(-3), n = days.reduce((a, l) => a + l.served, 0);
+  let per = n ? days.reduce((a, l) => a + l.net + l.fix, 0) / n : 0;
+  if (per < 10) {                                     // geçmiş yoksa ya da zarardaysa menüden tahmin
+    let wp = 0, wc = 0, ww = 0;
+    for (const id of menu().filter((x) => !S.menuOff[x])) {
+      const d = DISHES[id], c = d.recipe ? d.recipe.reduce((x, y) => x + costOf(y), 0) : d.kind === 'squeeze' ? 2 * costOf('portakal') : STOCK[id] ? costOf(id) : 0;
+      wp += d.w * price(id); wc += d.w * c; ww += d.w;
+    }
+    per = Math.max(10, (wp - wc) / ww * 1.8);
+  }
+  return { fixed, n: Math.ceil(fixed / per) };
+}
 // Banka: limit itibara bağlı; borç günlük taksitle kapanır
 const loanLimit = () => Math.round((1500 + S.rep * 700) / 500) * 500;
 const loanRoom = () => Math.max(0, loanLimit() - (S.loan ? Math.ceil(S.loan.left / (1 + LOAN_RATE)) : 0));
@@ -783,6 +809,7 @@ function renderHub() {
   if (S.day >= 2 && S.coins <= 5) news.push(`🪙 Kasada ${S.coins} bozukluk kaldı; bitince para üstü veremezsin. Bankadan al.`);
   if (franchise()) news.push(`🧑‍💼 Şubelerin bugün yaklaşık ${tl(franchise())} getirecek.`);
   if (S.loan) news.push(`🏦 Banka borcun ${tl(S.loan.left)} · akşam taksiti ${tl(Math.min(S.loan.pay, S.loan.left))}.`);
+  if (S.day > 1 && rentBase(S.day) > rentBase(S.day - 1)) news.push(`🏠 Ev sahibi kirayı ${tl(rent(S.day))} yaptı.${rentBase(S.day) >= RENT_STEPS[RENT_STEPS.length - 1] ? ' Söz verdi: bundan sonra artmayacak.' : ''}`);
   if (S.day === 2) news.push('💵 Bugünden itibaren hesabı sen alıyorsun: müşterinin verdiği paraya göre doğru para üstünü seç.');
   if (S.day >= 2 && !S.up.pos) news.push('💳 Kartla ödemek isteyenler var. POS cihazın yok; nakit veriyorlar ama bahşişleri yarım.');
   if (S.prepDone) news.push(`🔪 Açılış hazırlığı: ${'★'.repeat(S.prep)}${'☆'.repeat(3 - S.prep)} · pişirme %${S.prep * 10} hızlı.`);
@@ -876,7 +903,8 @@ function renderHub() {
   });
   $('#uHelp').hidden = S.day !== 1;
   $('#btnPrep').hidden = !!S.prepDone;
-  $('#uRent').textContent = `Akşam ödenecek: kira ${tl(rent(S.day))}${wages() ? ` + yevmiye ${tl(wages())}` : ''} · İtibar ★ ${S.rep.toFixed(1)}`;
+  $('#uRent').innerHTML = `Akşam ödenecek: kira ${tl(rent(S.day))}${wages() ? ` + yevmiye ${tl(wages())}` : ''}${S.loan ? ` + taksit ${tl(Math.min(S.loan.pay, S.loan.left))}` : ''} · İtibar ★ ${S.rep.toFixed(1)}` +
+    `<br>⚖️ Başabaş: yaklaşık <b>${Math.min(45, breakEven().n)}${breakEven().n > 45 ? '+' : ''} müşteri</b> gerek (bugünün tahmini ${est})<br>${rentNote()}`;
   show('hub');
   setWeatherFx($('#hubScene'), wxMode());
   if (S.story && !S.story.done && STORY[S.day] && !S.story.seen[S.day]) {   // günün bölümü bir kez gösterilir
@@ -3269,7 +3297,7 @@ function endDay() {
   const STREET = { dugun: 'düğün konvoyu geçti', film: 'film çekimi vardı', yol: 'yol çalışması vardı' };
   if (st.street) notes.push(`🏙️ Sokakta bugün ${STREET[st.street]}.`);
   if (!S.challenge) {                                 // büfe günlüğüne yaz
-    S.log = (S.log || []).concat({ day: S.day, event: EVENTS[S.event].name, icon: EVENTS[S.event].icon, served: st.served, lost: st.lost + st.sent, rev: st.rev, tips: st.tips, net, rep: S.rep,
+    S.log = (S.log || []).concat({ day: S.day, event: EVENTS[S.event].name, icon: EVENTS[S.event].icon, served: st.served, lost: st.lost + st.sent, rev: st.rev, tips: st.tips, net, rep: S.rep, fix: r + wage + nightCost + inst + premium + mama,
       note: [st.street && STREET[st.street], st.fines && 'zabıta ceza kesti', st.bestCombo >= 8 && `${st.bestCombo}’lik seri`, D.race && (st.rev >= D.race.target ? 'yarışı kazandın' : 'yarışı kaybettin')].filter(Boolean).join(' · ') }).slice(-60);
   }
   D.pending = { notes, goalLines };
@@ -3527,6 +3555,10 @@ $('#btnContinue').onclick = () => {
   if (S.story && !S.story.seen) S.story.seen = {};
   if (save.staff) S.crew.garson = true;   // eski kayıttaki çırak artık garson
   enterGame();
+  if (!save.rentV && S.day > 1) {         // eski kayıt: kira kuralı değişti, bir kez haber ver
+    S.notice = `${S.notice ? S.notice + ' ' : ''}🏠 Ev sahibiyle yeni anlaşma: kira artık her gün değil haftada bir artıyor ve tavanı var. Bugünkü kira ${tl(rent(S.day))}.`;
+    store(SAVE_KEY, S); renderHub();
+  }
 };
 $('#hubScene').onclick = (e) => {
   const g = e.target.closest('[data-go]');

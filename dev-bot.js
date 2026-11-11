@@ -86,3 +86,52 @@ function botWeek(days = 7, ups = ['sucuk', 'fritoz', 'dolap', 'semaver', 'cezve'
   }
   return out;
 }
+
+// ---- Denge ölçümü: tohumlu, tedbirli bir oyuncu (kepengi kilitler, tahmine göre mal alır) ----
+// every: iki hamle arası tik (11 ≈ 0,55 sn hızlı · 22 ≈ 1,1 sn orta · 44 ≈ 2,2 sn yavaş)
+const rng32 = (a) => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+function smartBuy() {
+  const ev = EVENTS[S.event];
+  const crowd = ev.spawn * POLICY[S.policy].spawn * LOCS[S.loc].spawn * season().spawn * (S.up.tabela ? 1.15 : 1);
+  const est = Math.min(nSlots() * 13, Math.round(dayLen() / ((7.6 - S.rep * 0.7) / crowd) * 0.8));
+  const ids = menu().filter((id) => !S.menuOff[id]);
+  const W = ids.map((id) => DISHES[id].w * (ev.w[id] || 1) * (season().w[id] || 1));
+  const sum = W.reduce((a, b) => a + b, 0), need = {};
+  ids.forEach((id, i) => {
+    const q = est * 1.7 * W[i] / sum, d = DISHES[id];
+    if (d.recipe) d.recipe.forEach((x) => { need[x] = (need[x] || 0) + q; });
+    else if (d.kind === 'squeeze') need.portakal = (need.portakal || 0) + 2 * q;
+    else need[id] = (need[id] || 0) + q;
+  });
+  for (const id in need) if (STOCK[id] && stockOpen(id)) buy(id, Math.max(0, Math.min(capOf(id), Math.ceil(need[id] * 1.25) + 1) - S.stock[id]));
+  buy('fis', Math.max(0, est + 10 - S.stock.fis));
+}
+// Dönen: iflas günü (0 = ayakta), kurtarma kredisi sayısı, haftalık ortalamalar (op = kira öncesi günlük kazanç)
+function botSeason(every = 22, days = 30, seed = 1, o = {}) {
+  const ups = o.ups || ['sucuk', 'semaver', 'dolap', 'grill2', 'fritoz', 'tente', 'kamera', 'pos', 'tabela', 'kasap', 'vitrin', 'doner', 'cezve', 'sikacak'];
+  const keep = { diff: prefs.diff, real: prefs.real, rnd: Math.random };
+  prefs.diff = o.diff || 'normal'; prefs.real = false; Math.random = rng32(seed);
+  S = newGame(); S.notice = null; if (o.story) S.story = { paid: 0, seen: {} };
+  startMorning();
+  const out = []; let loans = 0, dead = 0;
+  for (let d = 1; d <= days; d++) {
+    if (d > 1) { S.locked = true; $('#btnNext').click(); }
+    for (const el of document.querySelectorAll('.overlay:not([hidden])')) el.hidden = true;
+    renderMorning();
+    const cm = S.cash; let spent = 0;
+    for (const u of ups) if (!S.up[u] && S.cash > UPGRADES[u].cost + rent(S.day) + 600) { S.cash -= UPGRADES[u].cost; S.up[u] = true; spent += UPGRADES[u].cost; break; }
+    if (S.story && !S.story.done) { const a = Math.min(storyLeft(), Math.floor((S.cash - rent(S.day) - 800) / 100) * 100); if (a > 0) { S.cash -= a; S.story.paid += a; spent += a; } }
+    smartBuy();
+    if (S.coins < 8) S.coins = 20;
+    const r = rent(S.day), inst = S.loan ? Math.min(S.loan.pay, S.loan.left) : 0;
+    const res = botDay(every);
+    out.push({ d, r, rev: res.rev, op: S.cash - cm + spent + r + inst, cash: Math.round(S.cash), served: res.served });
+    if (document.querySelector('.screen.active').id === 'gameover') {
+      if (!$('#btnRescue').hidden) { $('#btnRescue').click(); loans++; } else { dead = d; break; }
+    }
+  }
+  Math.random = keep.rnd; prefs.diff = keep.diff; prefs.real = keep.real;
+  const avg = (w, k) => { const x = out.filter((e) => Math.ceil(e.d / 7) === w); return x.length ? Math.round(x.reduce((s, e) => s + e[k], 0) / x.length) : null; };
+  const weeks = [...new Set(out.map((e) => Math.ceil(e.d / 7)))];
+  return { every, seed, dead, loans, ups: Object.keys(S.up).length, story: S.story ? S.story.paid : null, cash: out[out.length - 1].cash, op: weeks.map((w) => avg(w, 'op')), rent: weeks.map((w) => avg(w, 'r')), served: weeks.map((w) => avg(w, 'served')) };
+}
