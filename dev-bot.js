@@ -48,8 +48,9 @@ function botAct() {
       if (D.slots.some((s) => s.dish === id && s.state !== 'empty' && s.state !== 'burnt')) continue;
       if (boardDish() === id) { if (D.slots.some((s) => s.state === 'empty')) { tapBoard(); return 1; } continue; }
       if (D.board.length && !D.board.every((x) => d.recipe.includes(x))) continue;
-      const need = d.recipe.find((x) => !D.board.includes(x));
-      if (need && S.stock[need] > 0 && !boardReject(need)) { tapIng(need); return 1; }
+      const need = d.recipe.filter((x) => x !== o.no).find((x) => !D.board.includes(x));
+      const use = need === 'ekmek' && o.bread && S.stock[o.bread] > 0 ? o.bread : need;
+      if (need && S.stock[use] > 0 && !boardReject(need)) { tapIng(use); return 1; }
       continue;
     }
     const st = id === 'patso'

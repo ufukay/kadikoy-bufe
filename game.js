@@ -13,6 +13,8 @@ const STOCK = {
   ayran:    { name: 'Ayran',          short: 'Ayran',   emoji: '🥛', cost: 12, ready: true },
   gazoz:    { name: 'Gazoz',          short: 'Gazoz',   emoji: '🥤', cost: 18, ready: true },
   ekmek:    { name: 'Tost Ekmeği',    short: 'Ekmek',   emoji: '🍞', cost: 8,  note: 'tost için' },
+  kepekli:  { name: 'Kepekli Ekmek',  short: 'Kepekli', emoji: '🍞', cost: 10, note: 'tost ekmeği yerine; isteyene', needs: ['firin'], art: 'i_ekmek', cls: 'kepekli' },
+  bazlama:  { name: 'Bazlama',        short: 'Bazlama', emoji: '🫓', cost: 12, note: 'tost ekmeği yerine; isteyene', needs: ['firin'], art: 'i_ekmek', cls: 'bazlama' },
   kasar:    { name: 'Kaşar',          short: 'Kaşar',   emoji: '🧀', cost: 22, note: 'tost için' },
   salgam:   { name: 'Şalgam',         short: 'Şalgam',  emoji: '🟣', cost: 14, ready: true, needs: ['dolap'] },
   limonata: { name: 'Limonata',       short: 'Limonata', emoji: '🍋', cost: 16, ready: true, needs: ['dolap'] },
@@ -42,7 +44,7 @@ const SAUCED = ['sosisli', 'patso'];
 const SAUCE_NAME = { '': 'sade', k: 'ketçap', m: 'mayonez', km: 'ketçap + mayonez' };
 const needsCut = (id) => DISHES[id].recipe && DISHES[id].recipe[0] === 'ekmek';
 const needsPlate = (id) => needsCut(id) || SAUCED.includes(id);
-const INGREDIENTS = ['ekmek', 'kasar', 'sucuk', 'salam', 'sandvic', 'sosis', 'ciger', 'kokorec', 'patates'];
+const INGREDIENTS = ['ekmek', 'kepekli', 'bazlama', 'kasar', 'sucuk', 'salam', 'sandvic', 'sosis', 'ciger', 'kokorec', 'patates'];
 
 // Müşterinin sipariş ettikleri
 const DISHES = {
@@ -85,6 +87,7 @@ const UPGRADES = {
   doner:   { name: 'Döner Ocağı',         emoji: '🥙', cost: 1200, desc: 'Eti kendin kesersin: ekmek arası döner.' },
   fritoz:  { name: 'Fritöz',              emoji: '🍟', cost: 600, desc: 'Patates kızartırsın: patso menüye girer.' },
   kamera:  { name: 'Güvenlik Kamerası',   emoji: '📹', cost: 900, desc: 'Gece hırsız giremez; kepengi unutsan da kasa güvende.' },
+  firin:   { name: 'Fırın Anlaşması',     emoji: '🍞', cost: 350, desc: 'Kepekli ekmek ve bazlama gelir: müşteri tostunun ekmeğini seçer.' },
   vitrin:  { name: 'Vitrin',              emoji: '🧆', cost: 550, desc: 'Hazır lezzetler: ıslak hamburger, midye dolma, turşu.' },
   cezve:   { name: 'Cezve Takımı',        emoji: '☕', cost: 450, desc: 'Türk kahvesi: köpüğü taşırmadan pişir.' },
   tente:   { name: 'Geniş Tente',         emoji: '⛱️', cost: 650, desc: 'Müşteriler %25 daha sabırlı bekler.' },
@@ -139,6 +142,7 @@ function todW(id) {
   if (p < 0.65) return needsCut(id) ? 1.5 : id === 'ayran' ? 1.4 : 1;
   return ['doner', 'ciger', 'kokorec', 'islak', 'midye', 'salgam', 'kumru'].includes(id) ? 1.7 : d.kind === 'pour' ? 0.7 : 1;
 }
+const BGS = [];                                          // kendi manzarası çizilmiş semtler (art/bg_<semt>.jpg)
 const FACES = { ogrenci: ['ogrenci', 'ogrenci2'], teyze: ['teyze', 'teyze2'], esnaf: ['esnaf', 'esnaf2'], plaza: ['plaza'], turist: ['turist', 'turist2'], taraftar: ['taraftar', 'taraftar2'] };
 const COURIER = { id: 'esnaf', face: 'kurye', prepaid: true, name: 'Kurye', tag: '📦 Paket', pat: 1.7, tip: 0, min: 3, max: 3, w: {} };
 // Dükkânı büyütme basamakları
@@ -273,7 +277,11 @@ const BEST_KEY = 'kadikoy-bufe-best';
 // Çizimler art/ klasöründe: yemekler kendi adıyla, çiğ malzemeler i_ önekiyle
 const pic = (name, cls = '') => `<img class="spr ${cls}" src="art/${name}.png" alt="" draggable="false">`;
 const dPic = (id) => pic((DISHES[id] && DISHES[id].art) || id);
-const sPic = (id) => (STOCK[id].noArt ? `<span class="emj">${STOCK[id].emoji}</span>` : pic(STOCK[id].ready || id === 'cay' || id === 'kahve' ? id : 'i_' + id));
+const ALT_BREAD = ['kepekli', 'bazlama'];                 // tost ekmeğinin yerine geçenler
+const NO_TXT = { kasar: 'kaşarsız', sucuk: 'sucuksuz', salam: 'salamsız', patates: 'patatessiz' };   // alerji ve özel istek
+const SIDE_PRICE = 20;
+const sameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
+const sPic = (id) => (STOCK[id].art ? pic(STOCK[id].art, STOCK[id].cls) : STOCK[id].noArt ? `<span class="emj">${STOCK[id].emoji}</span>` : pic(STOCK[id].ready || id === 'cay' || id === 'kahve' ? id : 'i_' + id));
 const onBoardPic = (id) => pic(id === 'patates' ? 'kizarmis' : 'i_' + id);
 const $ = (s) => document.querySelector(s);
 const tl = (n) => (n < 0 ? '−' : '') + '₺' + Math.abs(Math.round(n)).toLocaleString('tr-TR');
@@ -1477,7 +1485,7 @@ function startDay() {
     cats: (S.up.mama || S.kittens ? [12, 48, 82] : [15 + Math.random() * 65]).map((t) => t + Math.random() * 10), catUntil: 0,
     gulls: S.event === 'yagmur' ? [] : [22 + Math.random() * 25, 66 + Math.random() * 30].slice(0, Math.random() < 0.5 ? 1 : 2), gullUntil: 0,
     blackAt: S.day >= 2 && Math.random() < 0.35 ? 25 + Math.random() * 55 : 0, blackUntil: 0,
-    combo: 0, target: null, gT: 3, aT: 2, plate: null, dirt: 0,
+    combo: 0, target: null, gT: 3, aT: 2, plate: null, dirt: 0, bread: null,
     queue: 0, dirtMax: 0, waterUntil: 0, celebAt: S.day >= 5 && Math.random() < 0.08 ? 20 + Math.random() * 60 : 0,
     streetAt: S.day >= 3 && Math.random() < 0.45 ? 22 + Math.random() * 60 : 0, blockUntil: 0, tipBoostUntil: 0, noiseUntil: 0, crewAt: 0,
     race: S.day % 7 === 5 ? { target: Math.max(900, Math.round((S.lastRev || 1200) * (0.9 + Math.random() * 0.3) / 50) * 50) } : null,
@@ -1503,6 +1511,7 @@ function startDay() {
   $('#coach').hidden = true;
   if (calm()) { D.inspAt = D.breakAt = D.blackAt = D.streetAt = 0; D.gulls = []; }
   if (S.mode === 'usta') { D.inspAt = 18; D.breakAt = 30; D.blackAt = 44; D.streetAt = 60; D.ferries = [10, 30, 50, 70, 90]; }
+  $('#scene').style.setProperty('--bg', `url(art/${BGS.includes(S.loc) ? 'bg_' + S.loc : 'bg'}.jpg)`);
   $('#race').hidden = true;
   $('#queue').hidden = true;
   buildKitchen();
@@ -1644,7 +1653,11 @@ function paintStock() {
 // Tezgâhtaki malzemeler hangi tarife denk geliyor?
 function boardDish() {
   const b = D.board;
-  const id = tryable().find((x) => { const r = DISHES[x].recipe; return r.length === b.length && r.every((y) => b.includes(y)); }) || null;
+  let id = tryable().find((x) => sameSet(DISHES[x].recipe, b)) || null;
+  if (!id && b.length >= 2) {                            // bir malzemesi çıkarılmış sipariş (alerji) bekleniyor mu?
+    const o = openOrders().find((x) => x.no && sameSet(DISHES[x.item].recipe.filter((y) => y !== x.no), b));
+    if (o) return o.item;
+  }
   if (id && DISHES[id].secret && !S.known[id]) {       // gizli tarif ilk kez tutturuldu
     S.known[id] = true;
     toast(`✨ Yeni tarif keşfettin: ${DISHES[id].name}!`); sfx.tip();
@@ -1652,10 +1665,13 @@ function boardDish() {
   }
   return id;
 }
+// Siparişin bütün özel istekleri: sos, iyi pişmiş, ekmek türü, çıkarılacak malzeme, yanına turşu
+const orderMarks = (o) => sauceMarks(o.sauce) + (o.well ? '<span class="sau well">🔥 iyi pişmiş</span>' : '') +
+  (o.bread ? `<span class="sau brd">${STOCK[o.bread].short}</span>` : '') + (o.no ? `<span class="sau no">🚫 ${NO_TXT[o.no]}</span>` : '') + (o.side ? '<span class="sau side">+ turşu</span>' : '');
 const sauceMarks = (z) => (z === undefined ? '' : `<span class="sau">${z ? [...z].map((x) => `<i class="dot ${x}"></i>`).join('') : 'sade'}</span>`);
 function plateHTML(p) {
   const img = p.cut ? dPic(p.dish).replace('class="spr ', 'class="spr h1 ') + dPic(p.dish).replace('class="spr ', 'class="spr h2 ') : dPic(p.dish);
-  return `<span class="food cooked${p.cut ? ' cutv' : ''}" style="--b:${p.q === 'flaw' ? 0.85 : 0.5}">${img}</span>`;
+  return `<span class="food cooked${p.cut ? ' cutv' : ''}${p.bread ? ' ' + p.bread : ''}" style="--b:${p.q === 'flaw' ? 0.85 : 0.5}">${img}</span>${p.side ? `<span class="sidepic">${pic(p.side)}</span>` : ''}`;
 }
 // Tezgâh kirlenir: 8'i geçince bahşiş düşer ve zabıta ceza keser; süngerle silinir
 function addDirt(n) { D.dirt += n; D.dirtMax = Math.max(D.dirtMax, D.dirt); paintDirt(); }
@@ -1670,10 +1686,11 @@ function cleanUp() {
   D.dirt = 0; paintDirt();
   toast('Tezgâh silindi ✨'); beep(1200, 0.1, 'sine', 0.05); buzz(10);
 }
-function toPlate(dish, q) {
+function toPlate(dish, q, from) {
   addDirt(1);
   if (!needsCut(dish)) beep(1760, 0.18, 'sine', 0.06);   // servis zili: tabak hazır
-  D.plate = { dish, q, cut: false, sauce: '', t: 0 };
+  D.plate = { dish, q, cut: false, sauce: '', t: 0, side: null, bread: (from && from.bread) || null, made: (from && from.made) || (D.board.length ? D.board.slice() : DISHES[dish].recipe.slice()) };
+  D.bread = null;
   D.board = [];
   paintBoard();
 }
@@ -1688,9 +1705,10 @@ function paintBoard() {
   if (D.plate) {
     const p = D.plate, d = DISHES[p.dish];
     const todo = needsCut(p.dish) && !p.cut;
+    const extra = [p.bread && STOCK[p.bread].short.toLocaleLowerCase('tr-TR'), p.dish && !sameSet(p.made, DISHES[p.dish].recipe) && DISHES[p.dish].recipe.filter((x) => !p.made.includes(x)).map((x) => NO_TXT[x] || '').join(' '), p.side && 'turşulu'].filter(Boolean).join(' · ');
     const hint = p.t >= COLD ? 'soğudu 🥶' : todo ? 'dokun: ikiye kes 🔪' : SAUCED.includes(p.dish) ? `sos: ${SAUCE_NAME[p.sauce]}` : p.t >= 9 ? 'soğuyor…' : 'müşteriye sürükle';
     el.className = 'board plated' + (todo ? ' todo' : ' done') + (p.t >= COLD ? ' cold' : '');
-    el.innerHTML = `${plateHTML(p)}<span class="blabel">${d.name}<small>${hint}</small></span>`;
+    el.innerHTML = `${plateHTML(p)}<span class="blabel">${d.name}<small>${extra ? extra + ' · ' : ''}${hint}</small></span>`;
     return;
   }
   if (!b.length) {
@@ -1698,7 +1716,7 @@ function paintBoard() {
     el.innerHTML = '<span class="bhint">Tezgâh<small>malzemeyi buraya sürükle</small></span>';
     return;
   }
-  el.className = 'board' + (id ? ' done' : '');
+  el.className = 'board' + (id ? ' done' : '') + (D.bread ? ' ' + D.bread : '');
   el.innerHTML = `${stackHTML(b, id)}<span class="blabel">${id ? `${DISHES[id].name}<small>${DISHES[id].cook ? 'ızgaraya sürükle' : 'müşteriye sürükle'}</small>` : '<small>malzeme ekle…</small>'}</span>`;
 }
 
@@ -1756,7 +1774,7 @@ const PITCH = { teyze: 1.35, ogrenci: 1.15, esnaf: 0.7, plaza: 1.1, turist: 0.95
 function speakOrder(c) {
   try {
     if (!prefs.voice || muted || !window.speechSynthesis || speechSynthesis.pending) return;
-    const say = c.order.map((o) => 'bir ' + DISHES[o.item].name + (o.sauce === '' ? ' sade' : '') + (o.well ? ' iyi pişmiş' : '')).join(', ');
+    const say = c.order.map((o) => 'bir ' + DISHES[o.item].name + (o.sauce === '' ? ' sade' : '') + (o.well ? ' iyi pişmiş' : '') + (o.bread ? ', ' + STOCK[o.bread].name + 'le' : '') + (o.no ? ', ' + NO_TXT[o.no] : '') + (o.side ? ', yanına turşu' : '')).join(', ');
     const u = new SpeechSynthesisUtterance(say + (c.reg ? ', her zamankinden' : ' lütfen'));
     u.lang = 'tr-TR'; u.rate = 1.25; u.volume = 0.8; u.pitch = PITCH[c.type.id] || 1;
     speechSynthesis.speak(u);
@@ -1788,6 +1806,10 @@ function makeOrder(type, night, forceN) {
     const o = { item: pool[k].id, done: false };
     if (SAUCED.includes(o.item)) { const z = Math.random(); o.sauce = z < 0.35 ? 'k' : z < 0.65 ? 'km' : z < 0.85 ? 'm' : ''; }
     if (DISHES[o.item].cook && S.day >= 2 && Math.random() < 0.18) o.well = true;   // özel istek: iyi pişmiş
+    if (needsCut(o.item) && S.up.firin && Math.random() < 0.3) { const br = ALT_BREAD.filter((x) => S.stock[x] > 0); if (br.length) o.bread = br[Math.floor(Math.random() * br.length)]; }
+    const rc = DISHES[o.item].recipe;
+    if (rc && rc.length >= 3 && S.day >= 4 && Math.random() < 0.12) { const xs = rc.filter((x) => NO_TXT[x]); if (xs.length) o.no = xs[Math.floor(Math.random() * xs.length)]; }   // alerji: bir malzeme çıkarılacak
+    if (DISHES[o.item].kind === 'board' && dishOpen('tursu') && !S.menuOff.tursu && S.stock.tursu > 0 && Math.random() < 0.18) o.side = 'tursu';
     order.push(o);
     pool.splice(k, 1);
   }
@@ -1823,7 +1845,7 @@ function spawnCustomer(reg, special, forceGroup) {
   const bubble = h('div', 'bubble');
   order.forEach((o) => {
     const d = DISHES[o.item];
-    o.el = h('span', 'oi', dPic(o.item) + (d.short ? `<small>${d.short}</small>` : '') + sauceMarks(o.sauce) + (o.well ? '<span class="sau well">🔥 iyi pişmiş</span>' : ''));
+    o.el = h('span', 'oi', dPic(o.item) + (d.short ? `<small>${d.short}</small>` : '') + orderMarks(o));
     bubble.append(o.el);
   });
   const send = h('button', 'send', 'Yolla ✋');
@@ -2176,7 +2198,11 @@ function openOrders() {
 }
 // Garson: bitmiş tabağı, ızgaradan doğrudan çıkanı ve raftaki hazır ürünü götürür
 function garsonAct() {
-  if (D.plate && !(needsCut(D.plate.dish) && !D.plate.cut)) { const c = plateTaker(); if (c) return servePlate(c); }
+  if (D.plate && !(needsCut(D.plate.dish) && !D.plate.cut)) {
+    const c = plateTaker();
+    if (c && !D.plate.side && plateOrder(c, D.plate).side && S.stock.tursu > 0) return tapProduct('tursu');
+    if (c) return servePlate(c);
+  }
   for (let i = 0; i < D.slots.length; i++) {
     const s = D.slots[i];
     if ((s.state !== 'ready' && s.state !== 'over') || needsPlate(s.dish)) continue;
@@ -2195,7 +2221,7 @@ function garsonAct() {
 }
 // Aşçı: sırayla bir iş yapar (bastır, tabağa al, kes, sos sık, malzeme koy, ızgaraya at)
 function asciAct() {
-  const open = openOrders();
+  const open = openOrders().filter((o) => !o.no);       // çıkarılacak malzemeli siparişler oyuncuya kalır
   if (D.dirt >= 6) return cleanUp();
   const br = D.slots.findIndex((x) => x.state === 'broken');
   if (br >= 0) return tapSlot(br);
@@ -2237,7 +2263,7 @@ function asciAct() {
     const d = DISHES[id];
     if (inWork(id) >= count[id]) continue;
     if (d.cook && !D.slots.some((x) => x.state === 'empty')) continue;
-    if (S.stock[d.recipe[0]] > 0 && d.recipe.every((x) => x === 'patates' || x === 'doner' || S.stock[x] > 0)) return tapIng(d.recipe[0]);
+    if (S.stock[d.recipe[0]] > 0 && d.recipe.every((x) => x === 'patates' || x === 'doner' || S.stock[x] > 0)) { const ob = open.find((o) => o.item === id && o.bread && S.stock[o.bread] > 0); return tapIng(ob ? ob.bread : d.recipe[0]); }
   }
 }
 
@@ -2248,6 +2274,11 @@ function tapProduct(id) {
   if (!live()) return;
   const d = DISHES[id], el = D.prodEls[id];
   if (S.stock[id] <= 0) return nope(el, `${d.name} bitti!`);
+  if (id === 'tursu' && D.plate && !D.plate.side && openOrders().some((o) => o.side === 'tursu' && plateFits(o, D.plate))) {   // tabağın yanına
+    S.stock.tursu--; D.plate.side = 'tursu';
+    paintBoard(); paintStock(); D.passSig = null; sfx.put();
+    return toast('Tabağın yanına turşu kondu 🥒');
+  }
   const c = findTaker(id);
   if (!c) return nope(el, `${d.name} isteyen yok`);
   S.stock[id]--;
@@ -2266,10 +2297,12 @@ function tapIng(id) {
     paintFryer(); paintStock(); sfx.put();
     return;
   }
-  const err = boardReject(id);
+  const tok = ALT_BREAD.includes(id) ? 'ekmek' : id;      // kepekli ve bazlama tarifte "ekmek" sayılır
+  const err = boardReject(tok);
   if (err) return nope(el, err);
   S.stock[id]--;
-  D.board.push(id);
+  D.board.push(tok);
+  if (tok === 'ekmek') D.bread = id === 'ekmek' ? null : id;
   settle();
   paintBoard(); paintStock(); sfx.put();
 }
@@ -2287,32 +2320,48 @@ function boardReject(id) {
 
 function clearBoard() {
   if (!live() || (!D.board.length && !D.plate)) return;
-  D.board = []; D.plate = null;
+  D.board = []; D.plate = null; D.bread = null;
   paintBoard();
   toast('Tezgâh boşaltıldı 🗑️');
 }
 
 // Tabaktaki yemeği kim alır? Soslularda sos tam tutmalı
+// Tabak bu siparişe uyar mı? Aynı yemekse ya da istenmeyen malzemesi çıkarılmış hâliyse uyar
+function plateFits(o, p) {
+  if (o.done) return false;
+  if (o.item === p.dish) return true;
+  return !!o.no && sameSet(p.made, DISHES[o.item].recipe.filter((x) => x !== o.no));
+}
+// Müşterinin bu tabağa en uygun siparişi (sos, ekmek ve alerji en çok tutan)
+function plateOrder(c, p) {
+  const os = c.order.filter((o) => plateFits(o, p));
+  const sc = (o) => (o.sauce === undefined || o.sauce === p.sauce ? 4 : 0) + ((o.bread || null) === (p.bread || null) ? 2 : 0) + (!o.no || !p.made.includes(o.no) ? 1 : 0) + (o.item === p.dish ? 0.5 : 0);
+  return os.sort((a, b) => sc(b) - sc(a))[0] || null;
+}
 function plateTaker() {
   const p = D.plate;
-  if (!SAUCED.includes(p.dish)) return findTaker(p.dish);
-  const fits = (c) => !c.leaving && c.order.some((o) => o.item === p.dish && !o.done && o.sauce === p.sauce);
-  if (D.target && fits(D.target)) return D.target;
-  return D.customers.find(fits);
+  const ok = (c) => { if (c.leaving || c.pay) return false; const o = plateOrder(c, p); return !!o && (!SAUCED.includes(p.dish) || o.sauce === p.sauce); };
+  if (D.target && ok(D.target)) return D.target;
+  return D.customers.find(ok);
 }
 function servePlate(c) {
-  const p = D.plate, sauced = SAUCED.includes(p.dish);
-  const open = (x) => x.item === p.dish && !x.done;
-  const o = c.order.find((x) => open(x) && (!sauced || x.sauce === p.sauce)) || c.order.find(open);
+  const p = D.plate, o = plateOrder(c, p);
+  if (!o) return;
   let q = p.q === 'ok' ? 'ok' : cookQ(o, p.q === 'flaw');
-  if (sauced) {
+  if (o.sauce !== undefined) {
     if (o.sauce !== p.sauce) { q = 'flaw'; toast('Sosu yanlış oldu'); }
     else if (q === 'ok') q = 'perfect';
+  }
+  if ((o.bread || null) !== (p.bread || null)) { q = 'flaw'; toast(o.bread ? `${STOCK[o.bread].name} istemişti` : 'Normal ekmek istemişti'); }
+  if (o.no && p.made.includes(o.no)) { q = 'flaw'; addRep(-0.1); toast(`İçinde ${STOCK[o.no].name.toLocaleLowerCase('tr-TR')} var! 😡`); }
+  if (o.side) {
+    if (p.side === o.side) c.paid += SIDE_PRICE;       // yanındaki turşu hesaba eklenir
+    else { if (q === 'perfect') q = 'ok'; toast('Turşusunu unuttun'); }
   }
   if (p.t >= COLD) { q = 'flaw'; toast('Soğumuş bu 🥶'); }
   D.plate = null;
   paintBoard();
-  deliver(c, p.dish, q, o);
+  deliver(c, o.item, q, o);
 }
 function tapPlate() {
   const p = D.plate, el = $('#board');
@@ -2356,6 +2405,7 @@ function tapBoard() {
 
 function toGrill(s, id) {
   s.dish = id; s.t = 0; s.w = 0; s.state = 'cook1';
+  s.bread = D.bread || null; s.made = D.board.slice(); D.bread = null;
   s.el.style.setProperty('--b', 0);
   D.board = [];
   paintBoard(); paintSlot(s); sfx.put();
@@ -2382,7 +2432,7 @@ function tapSlot(i) {
     if (D.board.length || D.plate) return nope(s.el, 'Önce tezgâhı boşalt');
     const id = s.dish, q = s.state === 'ready' ? 'perfect' : 'flaw';
     reset();
-    toPlate(id, q);
+    toPlate(id, q, s);
     return sfx.put();
   }
   if (s.state === 'ready' || s.state === 'over') {
@@ -2391,6 +2441,7 @@ function tapSlot(i) {
     const id = s.dish, q = s.state === 'ready' ? 'perfect' : 'flaw';
     reset();
     const o = c.order.find((x) => x.item === id && !x.done);
+    if (o.no && s.made && s.made.includes(o.no)) { addRep(-0.1); toast(`İçinde ${STOCK[o.no].name.toLocaleLowerCase('tr-TR')} var! 😡`); return deliver(c, id, 'flaw', o); }
     return deliver(c, id, cookQ(o, q === 'flaw'), o);
   }
   if (s.state === 'burnt') { reset(); return toast('Çöpe gitti 🗑️'); }
@@ -2537,7 +2588,7 @@ function dropTargets(p) {
     if (!p.dish) return [trash];
     return DISHES[p.dish].cook ? [...D.slots.filter((s) => s.state === 'empty').map((s) => s.el), trash] : [...custs(p.dish), trash];
   }
-  if (p.kind === 'plate') return needsCut(p.dish) && !D.plate.cut ? [trash] : [...custs(p.dish), trash];
+  if (p.kind === 'plate') return needsCut(p.dish) && !D.plate.cut ? [trash] : [...D.customers.filter((c) => !c.leaving && plateOrder(c, D.plate)).map((c) => c.el), trash];
   if (p.kind === 'slot') {
     if (!p.dish) return [trash];
     return needsPlate(p.dish) ? (D.board.length || D.plate ? [trash] : [$('#board'), trash]) : [...custs(p.dish), trash];
@@ -2604,7 +2655,7 @@ function drop(p, zone) {
     if (needsCut(p.dish) && !D.plate.cut) return nope(zone, 'Önce ikiye kes');
     const c = zone._c;
     if (!c || c.leaving) return;
-    if (!wants(c, p.dish)) return nope(c.el, `${DISHES[p.dish].name} istemedi`);
+    if (!plateOrder(c, D.plate)) return nope(c.el, `${DISHES[p.dish].name} istemedi`);
     return servePlate(c);
   }
   if (p.kind === 'board') {
@@ -2707,7 +2758,7 @@ function paintTickets() {
   D.tickSig = sig;
   $('#tickets').classList.toggle('blind', !!(prefs.blind && prefs.voice && !muted));
   $('#tickets').innerHTML = list.length ? list.map((c) => `<div class="ticket m${c.mood || 0}"><b>${c.reg ? c.reg.name : c.prepaid ? 'Paket' : c.type.name}</b>` +
-    c.order.map((o) => `<span class="${o.done ? 'done' : ''}">${dPic(o.item)}${DISHES[o.item].short || DISHES[o.item].name}${sauceMarks(o.sauce)}${o.well ? ' 🔥' : ''}</span>`).join('') + '</div>').join('')
+    c.order.map((o) => `<span class="${o.done ? 'done' : ''}">${dPic(o.item)}${DISHES[o.item].short || DISHES[o.item].name}${orderMarks(o)}</span>`).join('') + '</div>').join('')
     : '<p class="empty">Bekleyen sipariş yok.</p>';
 }
 // Servis penceresi: mutfaktan çıkan, müşteriye gitmeye hazır yemekler
