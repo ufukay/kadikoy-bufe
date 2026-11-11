@@ -11,31 +11,46 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
 <title>Kadıköy Büfe</title>
-<link rel="stylesheet" href="style.css?v=1111n">
+<link rel="stylesheet" href="style.css?v=1111o">
 </head>
 <body>
 <div id="app">
 
   <!-- ANA MENÜ -->
   <section id="title" class="screen active">
-    <div class="title-art">
-      <div class="awning big"></div>
+    <div class="tawn"></div>
+    <svg class="tbird b1" viewBox="0 0 24 10" aria-hidden="true"><path d="M0 7 Q6 0 12 6 Q18 0 24 7 Q18 4 12 10 Q6 4 0 7Z"/></svg>
+    <svg class="tbird b2" viewBox="0 0 24 10" aria-hidden="true"><path d="M0 7 Q6 0 12 6 Q18 0 24 7 Q18 4 12 10 Q6 4 0 7Z"/></svg>
+    <svg class="tbird b3" viewBox="0 0 24 10" aria-hidden="true"><path d="M0 7 Q6 0 12 6 Q18 0 24 7 Q18 4 12 10 Q6 4 0 7Z"/></svg>
+    <header class="thead">
+      <span class="teyebrow" id="tEyebrow">KADIKÖY ÇARŞI • AKŞAM SERVİSİ</span>
       <div class="logo">
         <span class="logo-top">KADIKÖY</span>
         <span class="logo-main">BÜFE</span>
-        <span class="logo-sub">tost · ayran · muhabbet</span>
+        <span class="logo-sub">tost • ayran • muhabbet</span>
       </div>
-      <div class="title-emoji">🥪 🥤 🐈 ⛴️</div>
-    </div>
-    <div class="title-actions">
-      <button id="btnContinue" class="btn primary" hidden>Devam Et</button>
-      <button id="btnNew" class="btn">Yeni Oyun (serbest)</button>
-      <button id="btnStory" class="btn">📖 Hikâye: Dedenin Büfesi</button>
-      <button id="btnChal" class="btn">🎯 Günün meydan okuması</button>
-      <button id="btnModes" class="btn">🎮 Oyun modları</button>
-      <button id="btnAch" class="btn ghost">🏅 Başarımlar ve skorlar</button>
-      <button id="btnSet" class="btn ghost">⚙️ Ayarlar ve zorluk</button>
-      <p id="bestLine" class="muted"></p>
+      <div class="tpill"><img src="art/kasarli.png" alt=""><img src="art/ayran.png" alt=""><img src="art/kedi.png" alt=""><img src="art/simit.png" alt=""><img src="art/cay.png" alt=""></div>
+    </header>
+    <div class="tgap"></div>
+    <div class="tsea">
+      <i class="tsun"></i>
+      <svg class="thz" viewBox="0 0 400 40" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 40 L0 30 Q22 21 48 27 Q66 31 84 40Z M316 40 Q338 29 362 27 Q384 25 400 31 L400 40Z"/>
+        <path d="M258 40 L262 33 L270 33 L270 27 L276 27 L276 22 L279 22 L279 27 L286 27 L286 33 L296 33 L300 40Z"/>
+      </svg>
+      <div class="title-actions">
+        <button id="btnContinue" class="tcard go" hidden><span class="tplay">▶</span><span class="tx"><b>Devam Et</b><small id="contSub"></small></span><em class="tbadge">KAYITLI</em></button>
+        <button id="btnNew" class="tcard"><span class="ti">✨</span><span class="tx"><b>Yeni Oyun (serbest)</b><small>Kendi büfeni sıfırdan kur</small></span><i class="tchev">›</i></button>
+        <button id="btnStory" class="tcard"><span class="ti">📖</span><span class="tx"><b>Hikâye: Dedenin Büfesi</b><small id="storySub"></small></span><em class="tchip" id="storyChip"></em></button>
+        <button id="btnChal" class="tcard"><span class="ti">🎯</span><span class="tx"><b>Günün meydan okuması<i class="tdot"></i></b><small>Herkes aynı günü oynuyor</small></span><em class="tgain" id="chalGain">Oyna</em></button>
+        <button id="btnModes" class="tcard"><span class="ti">🎮</span><span class="tx"><b>Oyun modları</b></span><em class="tside">Hız • Düello • Usta</em><i class="tchev">›</i></button>
+      </div>
+      <nav class="tbar">
+        <button id="btnHow"><span>❓</span>Nasıl oynanır</button>
+        <button id="btnAch"><span>🏅</span>Başarımlar</button>
+        <button id="btnSet"><span>⚙️</span>Ayarlar</button>
+      </nav>
+      <p id="bestLine" class="tquote"></p>
     </div>
 
     <div class="overlay" id="modes" hidden>
@@ -262,6 +277,7 @@
         <button id="btnMute" class="btn">Ses: Açık</button>
         <button id="btnMusic" class="btn">Müzik: Açık</button>
         <button id="btnSet2" class="btn">⚙️ Ayarlar</button>
+        <button id="btnHow2" class="btn">❓ Nasıl oynanır</button>
         <button id="btnQuit" class="btn ghost">Ana Menü</button>
       </div>
     </div>
@@ -291,6 +307,14 @@
     </div>
   </section>
 
+  <div class="overlay top" id="howv" hidden>
+    <div class="how">
+      <div class="how-head"><h2>Nasıl oynanır?</h2><button id="howSkip" class="how-x" aria-label="Kapat">✕</button></div>
+      <div class="how-track" id="howTrack"></div>
+      <div class="how-dots" id="howDots"></div>
+      <div class="how-nav"><button id="howPrev" class="btn ghost">Geri</button><button id="howNext" class="btn primary">İleri</button></div>
+    </div>
+  </div>
   <div class="overlay top" id="settings" hidden>
     <div class="sheet">
       <h2>⚙️ Ayarlar</h2>
@@ -301,6 +325,6 @@
     </div>
   </div>
 </div>
-<script src="game.js?v=1111n"></script>
+<script src="game.js?v=1111o"></script>
 </body>
 </html>

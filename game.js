@@ -648,17 +648,81 @@ function openSettings() {
   $('#settings').hidden = false;
 }
 
+// ---------- Nasıl oynanır: kaydırmalı adımlar ----------
+const HOW_KEY = 'kadikoy-bufe-how';
+const hwImg = (n, cls = '') => `<img src="art/${n}.${n === 'mahalle' ? 'jpg' : 'png'}" alt=""${cls ? ` class="${cls}"` : ''} draggable="false">`;
+const HOW = [
+  { t: 'Sabah: toptancıya uğra', cls: 'market',
+    art: () => `<div class="hw-row">${['ekmek', 'kasar', 'simit', 'ayran'].map((id) => `<div class="hw-crate">${hwImg(STOCK[id].ready ? id : 'i_' + id)}<b>${tl(STOCK[id].cost)}</b></div>`).join('')}</div><span class="hw-tag">📈 Gazete: bugün yaklaşık 15 müşteri</span>`,
+    p: ['Mahallede <b>Toptancı</b>’ya dokun, günün malını al. Para kasadan çıkar; biten ürünü o gün satamazsın.', 'Gazetedeki <b>müşteri tahmini</b> ne kadar alacağını söyler. Fazla alma: bazı ürünler ertesi güne kalmaz.'] },
+  { t: 'Tostu kendin yap', cls: 'cook',
+    art: () => `<div class="hw-row"><div class="hw-st"><div class="box wood">${hwImg('i_ekmek')}${hwImg('i_kasar')}</div><em>1 · Tezgâha sürükle</em></div><i class="hw-arr">›</i><div class="hw-st"><div class="box grill">${hwImg('kasarli')}<span class="hw-press">Bastır!</span></div><em>2 · Izgarada bastır</em></div><i class="hw-arr">›</i><div class="hw-st"><div class="box dish">${hwImg('kasarli')}<span class="hw-cut">✂️</span></div><em>3 · Tezgâhta kes</em></div></div>`,
+    p: ['<b>Ekmeği ve kaşarı</b> tezgâha sürükle, tezgâhtan ızgaraya taşı. “<b>Bastır!</b>” yazınca ızgaraya dokun.', 'Kıvamına gelince tezgâha geri al ve dokunup <b>ikiye kes</b>. Fazla beklersen yanar, çöpe gider.'] },
+  { t: 'Siparişi müşteriye ver', cls: 'serve',
+    art: () => `<div class="hw-cust">${hwImg('teyze')}<div class="hw-pat"><i></i></div></div><div class="hw-bub">${hwImg('kasarli')}${hwImg('ayran')}</div><span class="hw-moods">Sabır çubuğu: 😊 → 😐 → 😠</span>`,
+    p: ['Balonda ne istediği yazar. Hazır ürünü <b>müşteriye sürükle</b>; içecek ve simit raftan tek dokunuşla gider.', 'Beklettikçe <b>sabır çubuğu</b> azalır, müşteri sinirlenir. Giderse satış da itibar da kaybolur.'] },
+  { t: 'Kasada hesabı al', cls: 'pay',
+    art: () => `<span class="hw-bill">Hesap <b>${tl(130)}</b> · müşteri <b>${tl(200)}</b> verdi</span><div class="hw-pay">${hwImg('k_kasa')}<div class="hw-chg"><span>${tl(60)}</span><span class="ok">${tl(70)} ✓</span><span>${tl(80)}</span></div>${hwImg('k_pos')}</div>`,
+    p: ['<b>2. günden itibaren</b> parayı sen alırsın: doğru <b>para üstünü</b> seç. Yanlış verirsen bahşiş gider.', 'Kartla ödeyene <b>POS</b>’a tutarı yaz. Şüpheli banknotu kontrol et; sahtesi zarar yazdırır.'] },
+  { t: 'Akşam: kira ve kâr', cls: 'night',
+    art: () => `<div class="hw-sum"><div class="p"><span>Satış ve bahşiş</span><b>+${tl(1850)}</b></div><div class="n"><span>Mal alımı</span><b>${tl(-620)}</b></div><div class="n"><span>Kira</span><b>${tl(-RENT_STEPS[0])}</b></div><div class="t p"><span>Günün kârı</span><b>+${tl(1850 - 620 - RENT_STEPS[0])}</b></div></div><span class="hw-tag">🏠 Kira haftada bir artar, en çok ${tl(RENT_STEPS[RENT_STEPS.length - 1])}</span>`,
+    p: ['Dükkân <b>22.00</b>’de kapanır. Kira, mal ve varsa yevmiye kasadan düşer; kalan senin kârın.', 'Mahalle ekranının altındaki <b>başabaş</b> satırı, zarar etmemek için kaç müşteri gerektiğini söyler. Kasa eksiye düşerse banka kredisi son çaredir.'] },
+  { t: 'Büfeni büyüt', cls: 'grow',
+    art: () => `<div class="hw-row"><div class="hw-up"><div class="pics">${hwImg('cay')}${hwImg('doner')}</div><b>Yeni lezzetler</b></div><div class="hw-up"><div class="pics">${hwImg('esnaf')}</div><b>Eleman tut</b></div><div class="hw-up"><div class="pics">${hwImg('mahalle', 'map')}</div><b>Yeni semtler</b></div></div>`,
+    p: ['Kazandıkça toptancıdan <b>yatırım</b> yap: çay, döner, patso, ikinci ızgara. Sonra eleman tut, yeni semte taşın.', 'Üç iş var: <b>mutfak, servis, kasa</b>. Hepsini kendin yapabilir ya da eleman tutup birine odaklanabilirsin.'],
+    tip: 'Zorlanırsan Ayarlar’dan <b>Rahat</b> ya da süre baskısı olmayan <b>Sakin</b> zorluğu seç.' },
+];
+let howAfter = null;
+function openHow(after) {
+  howAfter = typeof after === 'function' ? after : null;
+  const tr = $('#howTrack');
+  tr.innerHTML = HOW.map((s, i) => `<article class="how-card"><div class="how-art ${s.cls}">${s.art()}</div><span class="how-step">ADIM ${i + 1} / ${HOW.length}</span><h3>${s.t}</h3>${s.p.map((x) => `<p>${x}</p>`).join('')}${s.tip ? `<p class="tip">💡 ${s.tip}</p>` : ''}</article>`).join('');
+  $('#howDots').innerHTML = HOW.map(() => '<i></i>').join('');
+  $('#howv').hidden = false;
+  tr.scrollLeft = 0;
+  howSync();
+}
+const howIdx = () => { const tr = $('#howTrack'); return clamp(Math.round(tr.scrollLeft / Math.max(1, tr.clientWidth)), 0, HOW.length - 1); };
+function howSync() {
+  const i = howIdx();
+  [...$('#howDots').children].forEach((d, k) => d.classList.toggle('on', k === i));
+  $('#howPrev').style.visibility = i ? 'visible' : 'hidden';
+  $('#howNext').textContent = i < HOW.length - 1 ? 'İleri' : howAfter ? 'Anladım, başla' : 'Anladım';
+}
+function howGo(i) { const tr = $('#howTrack'); tr.scrollTo({ left: i * tr.clientWidth, behavior: 'smooth' }); }
+function closeHow() {
+  $('#howv').hidden = true;
+  store(HOW_KEY, 1);
+  $('#btnHow').classList.remove('new');
+  const f = howAfter; howAfter = null;
+  if (f) f();
+}
+// İlk kez oynayan önce adımları görür; istediği an kapatıp oyuna geçer
+const firstHow = (go) => (store(HOW_KEY) ? go() : openHow(go));
+$('#howTrack').addEventListener('scroll', howSync, { passive: true });
+$('#howNext').onclick = () => { const i = howIdx(); if (i >= HOW.length - 1) closeHow(); else howGo(i + 1); };
+$('#howPrev').onclick = () => howGo(Math.max(0, howIdx() - 1));
+$('#howSkip').onclick = closeHow;
+$('#btnHow').onclick = () => openHow();
+$('#btnHow2').onclick = () => openHow();
+
 function renderTitle() {
   Math.random = realRandom;
   running = false;
   const save = store(SAVE_KEY);
   $('#btnContinue').hidden = !save;
-  if (save) $('#btnContinue').textContent = `Devam Et · Gün ${save.day}`;
+  const loc = (save && LOCS[save.loc]) || LOCS.carsi, hr = new Date().getHours();
+  if (save) $('#contSub').textContent = `${loc.name} • Gün ${save.day}`;
+  $('#tEyebrow').textContent = `${loc.name.toLocaleUpperCase('tr-TR')} • ${hr >= 6 && hr < 11 ? 'SABAH' : hr >= 11 && hr < 16 ? 'ÖĞLE' : hr >= 16 && hr < 21 ? 'AKŞAM' : 'GECE'} SERVİSİ`;
+  $('#storySub').textContent = `Dedenin ${tl(STORY_DEBT)} borcunu öde`;
+  $('#storyChip').textContent = `${STORY_DAYS} gün`;
   const best = store(BEST_KEY);
   const ch = store(CHAL_KEY), doneToday = ch && ch.date === todayStr();
-  $('#btnChal').textContent = doneToday ? `🎯 Bugünün meydan okuması: ${ch.score} puan` : '🎯 Günün meydan okuması';
+  $('#chalGain').textContent = doneToday ? `✓ ${ch.score} puan` : 'Oyna';
   $('#btnChal').disabled = !!doneToday;
-  $('#bestLine').textContent = best ? `En iyi ilk hafta kasası: ${tl(best)}` : 'İlk haftayı çıkar, mahallenin efsanesi ol.';
+  $('#btnNew').classList.toggle('go', !save);         // kayıt yoksa öne çıkan kart "Yeni Oyun"
+  $('#btnHow').classList.toggle('new', !store(HOW_KEY));
+  $('#bestLine').textContent = best ? `En iyi ilk hafta kasası: ${tl(best)}` : '“İlk haftayı çıkar, mahallenin efsanesi ol.”';
   show('title');
 }
 
@@ -3515,8 +3579,8 @@ function paintMute() {
   $('#btnMusic').textContent = 'Müzik: ' + (musicOn ? 'Açık' : 'Kapalı');
 }
 
-$('#btnNew').onclick = () => { S = newGame(); enterGame(); };
-$('#btnStory').onclick = () => { S = newGame(); S.story = { paid: 0, seen: {} }; enterGame(); };
+$('#btnNew').onclick = () => firstHow(() => { S = newGame(); enterGame(); });
+$('#btnStory').onclick = () => firstHow(() => { S = newGame(); S.story = { paid: 0, seen: {} }; enterGame(); });
 $('#btnChal').onclick = startChallenge;
 $('#btnModes').onclick = () => {
   const best = store(MODE_KEY) || {}, box = $('#modeList'); box.innerHTML = '';
