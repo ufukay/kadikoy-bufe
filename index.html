@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
 <title>Kadıköy Büfe</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=1111d">
 </head>
 <body>
 <div id="app">
@@ -62,6 +62,7 @@
         <p>Üç iş var: mutfak, servis ve kasa. Hepsini kendin yapabilir ya da toptancıdan eleman tutup birine odaklanabilirsin.</p>
       </div>
       <div class="card goals" id="uGoals"></div>
+      <div class="card roles" id="uRoles"></div>
       <div class="card nb" id="uNb"></div>
       <button id="btnPrep" class="btn">🔪 Açılış hazırlığı yap</button>
       <p class="muted small" id="uRent"></p>
@@ -100,7 +101,7 @@
     <header class="m-head">
       <div>
         <div class="m-day" id="mDay">Gün 1</div>
-        <div class="m-sub">Toptancı ve yatırımlar</div>
+        <div class="m-sub" id="mSub">Toptancı ve yatırımlar</div>
       </div>
       <div class="m-cash" id="mCash">₺0</div>
     </header>
@@ -117,7 +118,7 @@
       <div class="seg" id="mPolicy"></div>
       <p class="muted small" id="mPolicyDesc"></p>
 
-      <h3>Toptancı</h3>
+      <h3 class="keep">Toptancı</h3>
       <div id="mMarket" class="list"></div>
 
       <h3>Personel</h3>
@@ -140,8 +141,16 @@
     <div class="hud">
       <div class="hud-item"><span id="hDay">Gün 1</span><b id="hClock">08:00</b></div>
       <div class="hud-item"><span>Kasa</span><b id="hCash">₺0</b></div>
-      <div class="hud-item"><span>İtibar</span><b id="hRep">★ 2.5</b></div>
+      <div class="hud-item"><span id="hRepLabel">İtibar</span><b id="hRep">★ 2.5</b></div>
+      <button id="btnTrip" class="icon-btn" aria-label="Toptancıya git">🛒</button>
       <button id="btnPause" class="icon-btn" aria-label="Duraklat">⏸</button>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button data-v="all">Hepsi</button>
+      <button data-v="mutfak">Mutfak<i></i></button>
+      <button data-v="servis">Servis<i></i></button>
+      <button data-v="kasa">Kasa<i></i></button>
     </div>
 
     <div class="scene" id="scene">
@@ -149,17 +158,18 @@
       <div class="awnlayer" id="awnLayer"></div>
       <div class="deco" id="deco"></div>
       <div class="banner" id="banner"></div>
-      <div class="combo" id="combo" hidden></div>
-      <button class="gull" id="gull" hidden><img src="art/marti.png" alt="Martı" draggable="false"></button>
+            <button class="gull" id="gull" hidden><img src="art/marti.png" alt="Martı" draggable="false"></button>
       <div class="customers" id="customers"></div>
       <button class="cat" id="cat" hidden><img src="art/kedi.png" alt="Kedi" draggable="false"></button>
       <div class="counter"></div>
-      <div class="visitor" id="visitor" hidden><span id="visText"></span><button id="visBtn"></button></div>
+      <div class="backroom" id="backroom"><div class="tickets" id="tickets"></div></div>
       <div class="toast" id="toast"></div>
     </div>
 
     <div class="kitchen">
       <div class="coach" id="coach" hidden></div>
+      <div class="visitor" id="visitor" hidden><span id="visText"></span><button id="visBtn"></button></div>
+      <div class="zone-k">
       <div class="cookrow" id="stations"></div>
       <div class="prep">
         <div class="boardwrap">
@@ -171,7 +181,12 @@
         </div>
         <div class="ings" id="ings"></div>
       </div>
-      <div class="shelf" id="shelf"></div>
+      </div>
+      <div class="zone-s">
+        <div class="pass" id="pass"></div>
+        <div class="shelf" id="shelf"></div>
+      </div>
+      <div class="zone-c" id="register"></div>
     </div>
 
     <div class="pos" id="pos" hidden>
@@ -228,6 +243,6 @@
     </div>
   </div>
 </div>
-<script src="game.js"></script>
+<script src="game.js?v=1111d"></script>
 </body>
 </html>
