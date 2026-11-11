@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
 <title>Kadıköy Büfe</title>
-<link rel="stylesheet" href="style.css?v=1111d">
+<link rel="stylesheet" href="style.css?v=1111j">
 </head>
 <body>
 <div id="app">
@@ -29,12 +29,22 @@
     </div>
     <div class="title-actions">
       <button id="btnContinue" class="btn primary" hidden>Devam Et</button>
-      <button id="btnNew" class="btn">Yeni Oyun</button>
+      <button id="btnNew" class="btn">Yeni Oyun (serbest)</button>
+      <button id="btnStory" class="btn">📖 Hikâye: Dedenin Büfesi</button>
+      <button id="btnChal" class="btn">🎯 Günün meydan okuması</button>
+      <button id="btnModes" class="btn">🎮 Oyun modları</button>
       <button id="btnAch" class="btn ghost">🏅 Başarımlar ve skorlar</button>
       <button id="btnSet" class="btn ghost">⚙️ Ayarlar ve zorluk</button>
       <p id="bestLine" class="muted"></p>
     </div>
 
+    <div class="overlay" id="modes" hidden>
+      <div class="sheet">
+        <h2>🎮 Oyun modları</h2>
+        <div id="modeList" class="bankbtns"></div>
+        <button id="btnModesClose" class="btn ghost">Kapat</button>
+      </div>
+    </div>
     <div class="overlay" id="achv" hidden>
       <div class="sheet">
         <h2>Başarımlar</h2>
@@ -61,9 +71,13 @@
         <p>Tost için ekmeği ve kaşarı tezgâha sürükle, tezgâhtan ızgaraya taşı, “Bastır!” deyince dokun. Kıvamındayken tezgâha al, dokunup ikiye kes, müşteriye sürükle.</p>
         <p>Üç iş var: mutfak, servis ve kasa. Hepsini kendin yapabilir ya da toptancıdan eleman tutup birine odaklanabilirsin.</p>
       </div>
+      <div class="card paper" id="uPaper"></div>
       <div class="card goals" id="uGoals"></div>
+      <div class="card civic" id="uCivic" hidden></div>
+      <div class="card req" id="uReq" hidden></div>
       <div class="card roles" id="uRoles"></div>
       <div class="card nb" id="uNb"></div>
+      <div class="hubrow three"><button id="btnMenu" class="btn">📋 Menü</button><button id="btnLog" class="btn">📔 Günlük</button><button id="btnInvite" class="btn">🔗 Davet</button></div>
       <button id="btnPrep" class="btn">🔪 Açılış hazırlığı yap</button>
       <p class="muted small" id="uRent"></p>
     </div>
@@ -76,6 +90,22 @@
         <button id="prepTap" class="preptap"><b id="prepCount">0</b><span id="prepUnit">dilim</span></button>
         <div class="mglr" id="mgLR" hidden><button id="mgL">◀ Sol</button><button id="mgR">Sağ ▶</button></div>
         <button id="btnPrepDone" class="btn primary" hidden>Tamam</button>
+      </div>
+    </div>
+    <div class="overlay" id="logv" hidden>
+      <div class="sheet">
+        <h2>📔 Büfe Günlüğü</h2>
+        <p id="skipText" class="bankinfo"></p>
+        <div id="logList" class="loglist"></div>
+        <div class="hubrow"><button id="btnSkip" class="btn">⏩ Bir yıl sonra?</button><button id="btnWeekShare" class="btn">📸 Haftayı paylaş</button></div>
+        <button id="btnLogClose" class="btn primary">Kapat</button>
+      </div>
+    </div>
+    <div class="overlay" id="storyv" hidden>
+      <div class="sheet story">
+        <h2 id="storyTitle"></h2>
+        <p id="storyText"></p>
+        <button id="btnStoryClose" class="btn primary">Devam</button>
       </div>
     </div>
     <div class="overlay" id="bank" hidden>
@@ -94,6 +124,15 @@
         <button id="btnWarnOpen" class="btn ghost">Yine de aç</button>
       </div>
     </div>
+  </section>
+
+  <!-- MENÜ -->
+  <section id="menuScr" class="screen">
+    <div class="menuboard" id="menuBoard"></div>
+    <footer class="m-foot">
+      <div class="seg" id="menuThemes"></div>
+      <div class="hubrow"><button id="btnMenuShare" class="btn">📸 Menüyü paylaş</button><button id="btnMenuClose" class="btn primary">Kaydet ve kapat</button></div>
+    </footer>
   </section>
 
   <!-- TOPTANCI -->
@@ -119,7 +158,12 @@
       <p class="muted small" id="mPolicyDesc"></p>
 
       <h3 class="keep">Toptancı</h3>
+      <div class="seg" id="mSupplier"></div>
+      <p class="muted small" id="mSupplierDesc"></p>
       <div id="mMarket" class="list"></div>
+
+      <h3 id="hBazaar">🧺 Salı pazarı</h3>
+      <div id="mBazaar" class="list"></div>
 
       <h3>Personel</h3>
       <div id="mStaff" class="list"></div>
@@ -129,6 +173,14 @@
 
       <h3>Yatırımlar</h3>
       <div id="mUpgrades" class="list"></div>
+    </div>
+    <div class="overlay" id="hire" hidden>
+      <div class="sheet">
+        <h2 id="hireTitle">Mülakat</h2>
+        <p class="bankinfo">Üç aday geldi. Hızlı ve sağlam olan daha çok yevmiye ister.</p>
+        <div id="hireList" class="bankbtns"></div>
+        <button id="btnHireClose" class="btn ghost">Vazgeç</button>
+      </div>
     </div>
     <div class="mmsg" id="mMsg" hidden></div>
     <footer class="m-foot">
@@ -151,6 +203,7 @@
       <button data-v="mutfak">Mutfak<i></i></button>
       <button data-v="servis">Servis<i></i></button>
       <button data-v="kasa">Kasa<i></i></button>
+      <button data-v="duo">İkili</button>
     </div>
 
     <div class="scene" id="scene">
@@ -159,14 +212,16 @@
       <div class="deco" id="deco"></div>
       <div class="banner" id="banner"></div>
             <button class="gull" id="gull" hidden><img src="art/marti.png" alt="Martı" draggable="false"></button>
+      <div class="queue" id="queue" hidden></div>
       <div class="customers" id="customers"></div>
       <button class="cat" id="cat" hidden><img src="art/kedi.png" alt="Kedi" draggable="false"></button>
       <div class="counter"></div>
-      <div class="backroom" id="backroom"><div class="tickets" id="tickets"></div></div>
+      <div class="backroom" id="backroom"><div class="wall" id="wall"></div><div class="tickets" id="tickets"></div></div>
       <div class="toast" id="toast"></div>
     </div>
 
     <div class="kitchen">
+      <div class="race" id="race" hidden></div>
       <div class="coach" id="coach" hidden></div>
       <div class="visitor" id="visitor" hidden><span id="visText"></span><button id="visBtn"></button></div>
       <div class="zone-k">
@@ -181,6 +236,7 @@
         </div>
         <div class="ings" id="ings"></div>
       </div>
+      <div class="quick" id="quick" hidden></div>
       </div>
       <div class="zone-s">
         <div class="pass" id="pass"></div>
@@ -217,7 +273,9 @@
       <div class="sum-title" id="sTitle">Gün Sonu</div>
       <div class="card" id="sTable"></div>
       <div class="card" id="sGoals"></div>
+      <div class="card" id="sReviews"></div>
       <div class="card" id="sNotes"></div>
+      <button id="btnLock" class="btn">🔓 Kepengi kilitle</button>
       <button id="btnShare" class="btn">📸 Günü paylaş</button>
       <button id="btnNext" class="btn primary">Ertesi Güne ☀️</button>
     </div>
@@ -243,6 +301,6 @@
     </div>
   </div>
 </div>
-<script src="game.js?v=1111d"></script>
+<script src="game.js?v=1111j"></script>
 </body>
 </html>
